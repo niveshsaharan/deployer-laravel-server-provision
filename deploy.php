@@ -319,7 +319,7 @@ task('deploy', [
     'yarn',
     'artisan:cache:clear',
     'artisan:view:clear',
-    'artisan:route:cache',
+   // 'artisan:route:cache', 
     'artisan:config:cache',
     'artisan:migrate',
     'artisan:db:seed',
