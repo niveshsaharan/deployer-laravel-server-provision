@@ -12,9 +12,9 @@
 
 
 # Checklist:
-[] Your domain should point to your server IP before you run the script
-[] `.deployer/.hosts.yml` file must have your domain or IP address for `hostname:` 
-[] `.deployer/config.php` file must have the same domain you pointed to your server's ip
+- [ ] Your domain should point to your server IP before you run the script
+- [ ] `.deployer/.hosts.yml` file must have your domain or IP address for `hostname:` 
+- [ ] `.deployer/config.php` file must have the same domain you pointed to your server's ip
 
 
 Use at your own risk
