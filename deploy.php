@@ -42,17 +42,17 @@ task('check:domain', function (){
     }
 });
 
-task('yarn', function (){
+task('npm:install', function (){
     if (has('previous_release')) {
         if (test('[ -d {{previous_release}}/node_modules ]')) {
             run('cp -R {{previous_release}}/node_modules {{release_path}}');
         }
     }
-    run('cd {{release_path}} && yarn');
+    run('cd {{release_path}} && npm install');
 });
 
 task('build', function (){
-    run('cd {{release_path}} && yarn production');
+    run('cd {{release_path}} && npm run production');
 });
 
 /**
@@ -121,6 +121,11 @@ task('vhost', function (){
     }
 });
 
+task('database', function (){
+    run('mysql -uroot -p' . get('mysql_password') . ' -e "CREATE DATABASE IF NOT EXISTS ' . get('mysql_database') . '"');
+});
+
+
 /**
  * Server related scripts
  */
@@ -139,13 +144,23 @@ task('server:update', function (){
     run('sudo apt-get update');
 })->desc('Update server');
 
-task('server:set_chars', function (){
+
+task('server:common', function (){
+    run('sudo apt-get install -y openssl acl software-properties-common');
     run('export LC_ALL="en_US.UTF-8"');
     run('export LC_CTYPE="en_US.UTF-8"');
 });
 
-task('server:common_apps', function (){
-    run('sudo apt-get install -y zip unzip openssl acl software-properties-common curl nginx');
+task('server:nginx', function(){
+    run('sudo apt-get install -y nginx');
+});
+
+task('server:curl', function(){
+    run('sudo apt-get install -y zip unzip');
+});
+
+task('server:zip', function(){
+    run('sudo apt-get install -y curl');
 });
 
 task('server:git', function (){
@@ -165,12 +180,7 @@ task('server:git', function (){
 task('server:node_js', function (){
     run('curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash - && sudo apt-get install -y nodejs');
     writeln('The node version is: ' . run('node -v'));
-    run('curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -');
-    run('echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list');
-    invoke('server:update');
-    run('sudo apt-get remove -y cmdtest');
-    run('sudo apt-get install -y yarn');
-    writeln('The yarn version is: ' . run('sudo yarn --version'));
+    writeln('The NPM version is: ' . run('npm -v'));
 });
 
 task('server:redis', function (){
@@ -249,7 +259,6 @@ task('server:ssl', function (){
     run('sudo service nginx reload');
 });
 
-
 task('server:cleanup', function (){
     run('sudo apt -y autoremove');
     run('sudo apt-get clean');
@@ -280,8 +289,10 @@ task('server:provision', [
     'server:init',
     'server:update',
     'server:deployer',
-    'server:set_chars',
-    'server:common_apps',
+    'server:common',
+    'server:nginx',
+    'server:curl',
+    'server:zip',
     'server:git',
     'server:node_js',
     'server:redis',
@@ -294,10 +305,6 @@ task('server:provision', [
     'server:cleanup',
     'server:done',
 ]);
-
-task('database', function(){
-    run('mysql -uroot -p' . get('mysql_password') . ' -e "CREATE DATABASE IF NOT EXISTS ' . get('mysql_database') . '"');
-});
 
 /**
  * Deploy script
@@ -316,10 +323,10 @@ task('deploy', [
     'deploy:vendors',
     'deploy:writable',
     'artisan:storage:link',
-    'yarn',
+    'npm:install',
     'artisan:cache:clear',
     'artisan:view:clear',
-   // 'artisan:route:cache', 
+   // 'artisan:route:cache',
     'artisan:config:cache',
     'artisan:migrate',
     'artisan:db:seed',
